@@ -57,10 +57,7 @@ class ProjectLibrary(object):
         return self.projects_by_skill_provided.get(skill,{})
     
     def get_projects_that_assess(self,skill):
-        return self.projects_by_skill_required.get(skill,{})
-                
-    def curriculum_from_skills(self,skills):
-        return AssessmentSet(skills,library=self)            
+        return self.projects_by_skill_required.get(skill,{})            
             
     def _index_projects(self,projects=None,follow_extensions=False):
         if projects is None:
@@ -72,7 +69,6 @@ class ProjectLibrary(object):
         projects_by_skill_provided = {}
         projects_that_extend = {}
         projects_extended_by = {}
-        overlap_by_frequency = {}
         
         for project_name,props in projects.items():
             (provides,requires) = self.get_skills(project_name,follow_extensions)
@@ -98,17 +94,6 @@ class ProjectLibrary(object):
                     if not projects_that_extend.has_key(extends):
                         projects_that_extend[extends] = set()
                     projects_that_extend[extends].add(project_name)
-
-        ## Now that we've built a projects_by_skill index, iterate once more to 
-        ## find the amount of overlap (shared skills) between projects.
-        #for project_name in projects.keys():
-        #    self.project_overlaps[project_name] = {}
-        #    skills = self.relevant_skills_by_project[project_name]
-        #    for skill in skills:
-        #        f = len(self.projects_by_skill[skill])
-        #        if not self.project_overlaps[project_name].has_key(f):
-        #            self.project_overlaps[project_name][f] = set()
-        #        self.project_overlaps[project_name][f].add(skill)
          
         return(skills_provided_by_project,
             skills_required_by_project,
@@ -117,52 +102,55 @@ class ProjectLibrary(object):
             projects_that_extend,
             projects_extended_by)
             
-    def assessments_for_skills(self,skills):
-        pass
-    
-class AssessmentSet(object):
-    def __init__(self,target_skills,library):
-        self.library = library
-        self.projects = set()
-        self.target_skills = set()
-        self.orphan_skills = set()
-        self.relevant_skills_by_project = {}
-        self.irrelevant_skills_by_project = {}
-        self.projects_by_skill = {}
-        self.projects_by_score = {}
-        self.project_overlaps = {}
-        self.project_relevance = {}
-        self.add_target_skills(target_skills)
-    
-    def add_target_skills(self,given_skills):
-        for skill in parse_skills(given_skills):
+    def assessments_for_skills(self,skills):   
+        projects = set()
+        target_skills = set()
+        orphan_skills = set()
+        for skill in parse_skills(skills):
             # Get all projects that require this skill
-            candidate_projects = self.get_candidate_projects(skill)
-            print "XXX: Assessments for %s: \n  %s" % (skill,"\n  ".join(candidate_projects))
+            candidate_projects = self.get_projects_that_assess(skill)
             if len(candidate_projects) > 0:
-                self.target_skills.add(skill)
-                self.projects.update(candidate_projects)
+                target_skills.add(skill)
+                projects.update(candidate_projects)
             else:
                 print "XXX ORPHAN: '%s'" % skill
-                self.orphan_skills.add(skill)
-        
+                orphan_skills.add(skill)
+                
         # Look over the list of projects and their skills, using the
         # scoring algorithm to drop one each time, for as many
         # iterations as possible. The range() here is just a cheap
-        # way to avoid infinite loops if something goes wrong  
-        self._generate_indexes()
-        max_loops = len(self.projects)
-        for loop in range(0, max_loops): 
+        # way to avoid infinite loops if something goes wrong 
+        max_loops = len(projects)
+        for loop in range(0, max_loops):             
+            projects_by_score = {}
+            for project_name in projects:
+                (provides,requires) = self.get_skills(project_name)
+                relevant = target_skills.intersection(requires)
+                
+                # How many assessed skills are in the requested list?
+                relevance_modifier = float(len(relevant)) / len(requires)
+                
+                # How many assessed skills are shared with how many projects?
+                redundancy_modifier = 0
+                uniqueness_modifier = -1
+                for skill in relevant:
+                    overlap = projects.intersection(self.get_projects_that_assess(skill))
+                    redundancy_modifier += len(overlap) - 1
+                    if redundancy_modifier == 0:
+                        uniqueness_modifier = 1
+                projects_by_score[project_name] = uniqueness_modifier * redundancy_modifier * relevance_modifier
+                
+            print "XX SCOOOORES: %s" % projects_by_score
 
             # Count backwards from the highest score to find the highest
             # negative score, if one exists. That is, the project with no 
             # unique skills and the least overlap with other projects.
             remove_me = None
             
-            print "XXX SCORES = %s" % self.projects_by_score
-            for score in reversed(sorted(self.projects_by_score.keys())):
+            print "XXX SCORES = %s" % projects_by_score
+            for score in reversed(sorted(projects_by_score.keys())):
                 if score < 0:
-                    remove_me = self.projects_by_score[score].pop()
+                    remove_me = projects_by_score[score].pop()
                     break
 
             # If there are no negative scores, then every remaining project
@@ -176,75 +164,8 @@ class AssessmentSet(object):
             # Then repeat the loop to re-calculate/remove until all remaining
             # projects have at least one unique skill or we pass the loop limit.
             print "*** Removing '%s' and re-calculating... ***\n" % remove_me
-            self.projects.remove(remove_me) 
-            self._generate_indexes()
-        
-    def _generate_indexes(self):
-        self.relevant_skills_by_project = {}
-        self.irrelevant_skills_by_project = {}
-        self.projects_by_skill = {}
-        self.projects_by_score = {}
-        self.project_overlaps = {}
-        self.project_relevance = {}
-        
-        # For each project, build a frequency distribution map that shows
-        # how many of its skills are shared by one, two, etc other projects
-        # and record the percentage of skills in the target set
-        for project_name in self.projects:
-            self.relevant_skills_by_project[project_name] = set()
-            self.irrelevant_skills_by_project[project_name] = set()
-            skills = self.get_skills(project_name)
-            for skill in skills:
-                if not self.projects_by_skill.has_key(skill):
-                    self.projects_by_skill[skill] = set()
-                self.projects_by_skill[skill].add(project_name)  
-                if skill in self.target_skills:
-                    self.relevant_skills_by_project[project_name].add(skill)
-                else:
-                    self.irrelevant_skills_by_project[project_name].add(skill)
-            relevant_cnt = len(self.relevant_skills_by_project[project_name])
-            irrelevant_cnt = len(self.irrelevant_skills_by_project[project_name])
-            # Shouldn't happen, but just in case...
-            if relevant_cnt == 0:
-                self.project_relevance[project_name] = 0
-            else:
-                relevance = float(relevant_cnt) / (relevant_cnt + irrelevant_cnt)
-                print "XXX relevance: %f = %s / (%s + %s)" % (relevance,float(relevant_cnt),relevant_cnt,irrelevant_cnt)
-                self.project_relevance[project_name] = relevance
-
-        # Now that we've built a projects_by_skill index that only has the remaining
-        # projects, iterate once more to find the amount of overlap (shared skills)
-        # between projects.
-        for project_name in self.projects:
-            self.project_overlaps[project_name] = {}
-            skills = self.relevant_skills_by_project[project_name]
-            for skill in skills:
-                f = len(self.projects_by_skill[skill])
-                if not self.project_overlaps[project_name].has_key(f):
-                    self.project_overlaps[project_name][f] = set()
-                self.project_overlaps[project_name][f].add(skill)
-                
-        # Assign each project a score
-        # If a project has at least one unique skill, the more overlap
-        # it has with other projects, the more we want it, since  
-        # the overlap provides more practice for other skills.
-        # If an project has no unique skills, it is a candidate for removal,
-        # and the *less* overlap it has the better, since less fewer 
-        # opportunities to practice other skills will be lost if we remove it.
-        self.projects_by_score = {}
-        for project_name in self.projects:
-            score = self._calculate_score(project_name)
-            if not self.projects_by_score.has_key(score):
-                self.projects_by_score[score] = set()
-            self.projects_by_score[score].add(project_name)
-            print "PROJECT: '%s'" % project_name
-            print "  Overlap: %s" % self.project_overlaps[project_name]
-            print "  Relevance: %s" % self.project_relevance[project_name]
-            print "  Score = %s" % score
-                
-    def get_skills(self,project_name,follow_extensions=True):
-        (provides,requires) = self.library.get_skills(project_name,follow_extensions)
-        return requires
+            projects.remove(remove_me) 
+        return projects
             
     def explain(self):
         report = []
@@ -269,36 +190,6 @@ class AssessmentSet(object):
                 report.append("")
         return "\n".join(report) + "\n"
     
-    def get_candidate_projects(self,skill):
-        return self.library.get_projects_that_assess(skill)
-    
-    def _calculate_score(self,project_name):
-        # Ensure that projects with no unique skills have a negative score
-        overlaps_by_frequency = self.project_overlaps[project_name]
-        redundancy_score = sum([ (frequency - 1) * len(skills) for frequency,skills in overlaps_by_frequency.items() ])
-        relevance_score = self.project_relevance[project_name]
-        if overlaps_by_frequency.has_key(1):
-            mult = 1
-        else:
-            mult = -1
-        score = mult * redundancy_score * relevance_score
-        return score
-        
-    
-class LessonSet(AssessmentSet):
-    def get_candidate_projects(self,skill):
-        return self.library.get_projects_that_teach(skill)
-    
-    def _calculate_score(self,project_name):
-        # Ensure that projects with no unique skills have a negative score
-        dists = self.project_overlaps[project_name]
-        if dists.has_key(1):
-            mult = 1
-        else:
-            mult = -1
-        score = mult * sum([ (frequency - 1) * len(skills) for frequency,skills in dists.items() ])
-        return score
-    
     
 if __name__ == "__main__":
     swagifacts_yml = open("swagifacts.yml","r").read().lower()
@@ -312,6 +203,5 @@ if __name__ == "__main__":
      "File: open, write, close",
      "Math: arithmetic, modulo",
     ]
-    lp = library.curriculum_from_skills(["control: if","output:file"])
+    lp = library.assessments_for_skills(["control: if","output:file"])
     print str(lp)
-    print "\n\n" + lp.explain()
