@@ -88,9 +88,14 @@ class ProjectLibrary(object):
                 "state":"green"
                 }[noun] for noun in g.vs["noun"]]
             g.es["color"] = [{
-                "provides":"purple",
-                "requires":"lightgray",
+                "provides":"darkgray",
+                "requires":"darkgray",
                 "extends":"black"
+                }[verb] for verb in g.es["verb"]]
+            g.es["arrow_size"] = [{
+                "provides": 0,
+                "requires": 1,
+                "extends": 1
                 }[verb] for verb in g.es["verb"]]
             g.vs["size"] = [{
                 "project":20,
