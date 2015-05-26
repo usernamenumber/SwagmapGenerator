@@ -1,38 +1,53 @@
 ---
-Hello World:
-  Description: "Write a script that prints 'hello world'"
-  Provides:
-    - "Script: executable"
-    - "Output: print"
-    
-Hello World (with variable):
-  Description: "Write a script that prints a variable set to 'hello world' (or something else)"
-  Requires:
-    - "Script: executable"
-    - "Output: print"
-  Provides:
-    - "Variable: overview, set"
-    - "String: variable interpolation"
+P1:
+  Requires: [S2,S5]
+P2:
+  Provides: [S2]
+  Requires: [S3,S6]
+P3:
+  Provides: [S3]
+  Requires: [S4]
+P4:
+  Provides: [S4]
+P5:
+  Provides: [S4,S5]
+P6:
+  Provides: [S6]
   
-What's Your Name?:
-  Description: "Write a script that prompts for and prints a string"
-  Requires:
-    - "Script: executable"
-    - "Output: print"
-    - "Variable: overview, set"
-  Provides:
-    - "Input: CLI prompt"
-    - "String: variable interpolation"
-    
-Ask Anything:
-  Description: "Write a function that prints an arbitrary prompt and returns the response"
-  Requires:
-    - "Script: executable"
-    - "Input: CLI prompt"
-    - "String: variable interpolation"
-    - "Output: print"
-  Provides:
-    - "Functions: overview, arguments, return"
+#Hello World:
+#  Description: "Write a script that prints 'hello world'"
+#  Provides:
+#    - "Script: executable"
+#    - "Output: print"
+#    
+#Hello World (with variable):
+#  Description: "Write a script that prints a variable set to 'hello world' (or something else)"
+#  Requires:
+#    - "Script: executable"
+#    - "Output: print"
+#  Provides:
+#    - "Variable: overview, set"
+#    - "String: variable interpolation"
+#  
+#What's Your Name?:
+#  Description: "Write a script that prompts for and prints a string"
+#  Requires:
+#    - "Script: executable"
+#    - "Output: print"
+#    - "Variable: overview, set"
+#  Provides:
+#    - "Input: CLI prompt"
+#    - "String: variable interpolation"
+#    
+#Ask Anything:
+#  Description: "Write a function that prints an arbitrary prompt and returns the response"
+#  Requires:
+#    - "Script: executable"
+#    - "Input: CLI prompt"
+#    - "String: variable interpolation"
+#    - "Output: print"
+#  Provides:
+#    - "Functions: overview, arguments, return"
     
 #Smarter Ask Anything:
 #  Description: "Add output that varies by response to Ask Anything"

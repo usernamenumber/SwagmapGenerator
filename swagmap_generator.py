@@ -13,10 +13,14 @@ def parse_skills(skills):
     return parsed
             
 class ProjectLibrary(object):
+    @staticmethod
+    def from_yaml_file(fn):        
+        swagifacts_yml = open(fn,"r").read()
+        return ProjectLibrary.from_yaml(swagifacts_yml)
             
     @staticmethod
-    def from_yaml(fn):
-        swagifacts_yml = open(fn,"r").read().lower()
+    def from_yaml(swagifacts_yml):
+        swagifacts_yml = swagifacts_yml.lower()
         return ProjectLibrary(yaml.load(swagifacts_yml))  
         
     def __init__(self,projects={}):
@@ -26,6 +30,7 @@ class ProjectLibrary(object):
         self.projects_by_skill_required = {}
         self.project_dependencies = {}
         self.projects_raw = {}
+        self.graph = None
         self.add_projects(projects)
         
     def add_projects(self,projects):
@@ -40,43 +45,156 @@ class ProjectLibrary(object):
          self.projects_that_extend,
          self.projects_extended_by
          ) = self._index_projects() 
+            
+    def as_graph(self,reset=False):
+        if self.graph is None or reset:
+            g = igraph.Graph(directed=True)
+            g.add_vertex("root",label="START",noun="state")
+            skills = set()
+            for project,props in self.projects_raw.items():
+                requires = parse_skills(props.get("requires",[]))
+                provides = parse_skills(props.get("provides",[]))
+                extends  = props.get("extends",[])
+                description = props.get("description","No description")
+                g.add_vertex(
+                    project,
+                    label=project,
+                    noun="project",
+                    requires=requires,
+                    provides=provides,
+                    extends=extends,
+                    description=description
+                )
+                skills.update(requires)
+                skills.update(provides)
+            for skill in skills:
+                g.add_vertex(skill,label=skill,noun="skill")
+                
+                
+            for project,props in self.projects_raw.items():
+                requires = parse_skills(props.get("requires",["root"]))
+                provides = parse_skills(props.get("provides",[]))
+                extends  = parse_skills(props.get("extends",[]))
+                for skill in requires:
+                    g.add_edge(skill,project,verb="requires")
+                for skill in provides:
+                    g.add_edge(project,skill,verb="provides")
+                for extended_project in extends:
+                    g.add_edge(extended_project, verb="extended by")
+            
+            g.vs["color"] = [{
+                "project":"cyan",
+                "skill":"lightgreen",
+                "state":"green"
+                }[noun] for noun in g.vs["noun"]]
+            g.es["color"] = [{
+                "provides":"purple",
+                "requires":"lightgray",
+                "extends":"black"
+                }[verb] for verb in g.es["verb"]]
+            g.vs["size"] = [{
+                "project":20,
+                "skill":10,
+                "state":30
+                }[noun] for noun in g.vs["noun"]]
+            self.graph = g
+        return self.graph
         
+    def render_graph(self):
+        g = self.as_graph()
+        graph_style = {
+            "layout" : g.layout("fr"), 
+            "vertex_label_size" : 12, 
+            "vertex_label_dist" : 1, 
+            "edge_label_size" : 8,
+        }
+        return igraph.plot(g,**graph_style)
+        
+    def build_path_to(self,goal_name,start=None,selected=None,max_loops=10):
+        g = self.as_graph()
+        
+        # Get the desired ending node
+        goal = g.vs.find(name=goal_name)
+        
+        # Find paths from zero knowledge by default
+        if start is None:
+            start = g.vs.find(name="root")
+        
+        # (re-)set graph state and list of selected nodes
+        g.es["color"] = "gray"
+        g.vs["label_color"] = "gray"
+        g.es["weight"] = 0
+        selected = {
+            "nodes" : set([start.index,goal.index]),
+            "paths" : [],
+            }
             
-    def as_graph(self):
-        g = igraph.Graph(directed=True)
-        g.add_vertex("root",label="zero knowledge",noun="state")
-        skills = set()
-        for project,props in self.projects_raw.items():
-            requires = parse_skills(props.get("requires",[]))
-            provides = parse_skills(props.get("provides",[]))
-            extends  = props.get("extends",[])
-            description = props.get("description","No description")
-            g.add_vertex(
-                project,
-                label=project,
-                noun="project",
-                requires=requires,
-                provides=provides,
-                extends=extends,
-                description=description
-            )
-            skills.update(requires)
-            skills.update(provides)
-        for skill in skills:
-            g.add_vertex(skill,label=skill,noun="skill")
+        print "BUILDING LESSON PLAN..."
+        loop = 0
+        while True:    
+            loop += 1
             
+            # (re-)set map colors
+            g.vs.select(color_eq="red")["color"] = "cyan"
+            g.vs.select(label_color_eq="red")["label_color"] = "gray"
+                
+            # For each project in the selected set, look for requirements that are not not provided
+            # by other projects in the set 
+            unmet = set()
+            for project in g.vs[selected["nodes"]].select(noun_eq="project"):
+                project_unmet = [ r.index for r in g.vs.select(name_in=project["requires"]) if r.index not in selected["nodes"] ]
+                if len(project_unmet) != 0:
+                    print "  Pass %s: need to resolve unmet dependencies for '%s': %s" % (loop,project["name"],", ".join([g.vs[d]["name"] for d in project_unmet]))
+                    unmet.update(project_unmet)
+                    g.vs[project_unmet]["color"] = "red"
+                    g.vs[project_unmet]["label_color"] = "red"
+                    
+            if loop >= max_loops:
+                print "EMERGENCY BRAKE! Maximum iterations reached"
+                break
+                    
+            # When all requirements are accounted for by projects in the set, we're done!
+            if len(unmet) == 0:
+                print "DONE! (passes: %s)" % loop
+                break
             
-        for project,props in self.projects_raw.items():
-            requires = parse_skills(props.get("requires",["root"]))
-            provides = parse_skills(props.get("provides",[]))
-            extends  = parse_skills(props.get("extends",[]))
-            for skill in requires:
-                g.add_edge(skill,project,verb="teaches")
-            for skill in provides:
-                g.add_edge(project,skill,verb="assessed by")
-            for extended_project in extends:
-                g.add_edge(extended_project, verb="extended by")
-        return g
+            # Find the shortest path from start to each dependency.
+            # Along the way, we add weights to encourage future paths to overlap as much as possible
+            #print "   Getting paths for unmet dependencies:\n    %s" % "\n    ".join([g.vs[x]["name"] for x in unmet]) 
+            paths = g.get_shortest_paths(start, unmet, weights="weight") 
+            for path in paths:
+                if path not in selected["paths"]:
+                    selected["paths"].append(path)
+                # Give edges that connect to the selected path a small bonus
+                for project_on_path in g.vs[path].select(noun_eq="project"):
+                    if project_on_path.index not in selected["nodes"]:
+                        #print "  ADDING PROJECT: %s" % project_on_path["name"]
+                        selected["nodes"].add(project_on_path.index)
+                        for provides_edge in g.es.select(_source=project_on_path.index,verb_eq="provides"):
+                            provides_skill = g.vs[provides_edge.target]
+                            if provides_skill["noun"] != "skill":
+                                continue
+                            provides_edge["weight"] += 10
+                            provides_edge["color"] = "green"
+                            if provides_skill.index in unmet:
+                                print "    Project '%s' teaches required skill '%s'" % (project_on_path["name"],provides_skill["name"])
+                            else:
+                                print "    Project '%s' adds extraneous skill '%s'" % (project_on_path["name"],provides_skill["name"])
+                            selected["nodes"].add(provides_skill.index)
+                # Give edges that are in the selected path a large bonus
+                # and highlight them on the graph
+                for path_taken in [ g.es[eid] for eid in g.get_eids(path=path) ]:
+                    path_taken["weight"] += 50
+                    path_taken["color"] = "green"
+                    
+        # Mark the final goal
+        for e in g.es.select(_target=goal.index):
+            e["color"] = "green"
+        goal["color"] = "yellow"
+        return selected
+        
+    def weight_by_relevance(self,skills):
+        pass
             
     
     def get_skills(self,project_name,follow_extensions=False):
