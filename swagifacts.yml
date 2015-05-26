@@ -34,136 +34,136 @@ Ask Anything:
   Provides:
     - "Functions: overview, arguments, return"
     
-Smarter Ask Anything:
-  Description: "Add output that varies by response to Ask Anything"
-  Extends:
-    - "Ask Anything"
-  Provides:
-    - "Control: if, elif, else"
-    
-Logging Ask Anything:
-  Description: "Add conversation log file to Smarter Ask Anything"
-  Extends:
-    - "Smarter Ask Anything"
-  Provides:
-    - "Output: file"
-    
-String Tokenizer:
-  Description: "Parse a list of comma-separated values and print them individually"
-  Requires:
-    - "CLI: Create script"
-    - "Output: print"
-  Provides:
-    - "Input: CLI arguments"
-    - "String: split"
-    - "String: variable interpolation"
-    
-Simple Calculator:
-  Description: "Accept simple RPN expressions as arguments and print result"
-  Requires:
-    - "CLI: Create script"
-    - "Output: print"
-    - "Control: if, elif, else"
-  Provides:
-    - "Input: CLI arguments"
-    - "String: split"
-    - "String: variable interpolation"
-    - "Math: arithmetic"
-    
-Re-usable Calculator:
-  Description: "Extend the Simple Calculator project so it can be executed or imported as a module"
-  Extends:
-    - "Simple Calculator"
-  Provides:
-    - "Module: overview, create, import"
-    - "Script: Importable"
-    
-Simple Menu:
-  Description: "Write a program the prompts the user to select options from a menu"
-  Requires:
-    - "Script: executable"
-    - "Input: CLI prompt"
-    - "Output: print"
-    - "Function: overview, arguments, return"
-  Provides:
-    - "Loop: while"
-    - "Input: CLI Menu"
-    - "Script: return"  
-    - "Output: stderr"
-    
-Write Fibonacci numbers to a file:
-  Description: "Write the first 100 Fibonacci numbers to a file called fibonacci.txt"
-  Requires:
-    - "Script: executable"
-    - "Loop: while"
-    - "Math: arithmetic"
-  Provides: 
-    - "Output: file"
-    
-FizzBuzz:
-  Description: "The classic 'FizzBuzz' problem. https://en.wikipedia.org/wiki/Fizz_buzz"
-  Requires:
-    - "Script: executable"
-    - "Loop: for, range"
-    - "String: variable interpolation"
-  Provides:
-    - "Control: if, elif, else"
-        
-Simple Text Adventure from XML data files:
-  Description: "Read an XML file with descriptions of 'rooms', guide user through them"
-  Requires:
-    - "Script: executable"
-    - "Input: CLI prompt"
-    - "Control: if, else"
-    - "Function: definition, arguments, return values"
-    - "XML: overview"
-    - "Dictionary: creation"
-    - "Dictionary: Methods: keys, values, items"
-    - "Input: CLI Menu"
-    - "Input: file"
-  Provides:
-    - "Input: XML"
-    - "XML: Xpath: query by tag"
-    - "Class: overview, creation"
-    - "Class: Methods: __init__, __repr__"
-  
-Debugging with Decorators:
-  Description: "Write a program with function decorators for optional error logging"
-  Requires:
-    - "Script: executable"
-    - "Function: arguments, return values"
-  Provides:
-    - "Functions: decorators"
-    - "Output: stderr"
-  
-Flask Hello World:
-  Description: "Write a Flask web application that displays 'Hello World'"
-  Requires:
-    - "Strings: variable interpolation"
-    - "Function: decorators"
-    - "Function: return values"
-  Provides:
-    - "Flask: create app"
-    - "Script: importable"
-    - "String: concatenation"
-    
-Flask What's Your Name?:
-  Description: "Write a Flask web application that prompts for a string and displays a customized response"
-  Requires:
-    - "Flask: Create app"
-    - "String: variable interpolation"
-  Provides:
-    - "AJAX: overview"
-    - "Flask: Input: form"
-    - "Flask: Output: update div"
-    
-Adapt your text adventure for the web:
-  Description: "Adapt the Simple Text Adventure project into a Flask web application"
-  Extends:
-    - "Simple Text Adventure from XML data files"
-  Requires:
-    - "Script: Importable"
-    - "Flask: Create app"
-    - "AJAX: overview"
-    - "Flask: Input: form"
-    - "Flask: Output: update div"
+#Smarter Ask Anything:
+#  Description: "Add output that varies by response to Ask Anything"
+#  Extends:
+#    - "Ask Anything"
+#  Provides:
+#    - "Control: if, elif, else"
+#    
+#Logging Ask Anything:
+#  Description: "Add conversation log file to Smarter Ask Anything"
+#  Extends:
+#    - "Smarter Ask Anything"
+#  Provides:
+#    - "Output: file"
+#    
+#String Tokenizer:
+#  Description: "Parse a list of comma-separated values and print them individually"
+#  Requires:
+#    - "CLI: Create script"
+#    - "Output: print"
+#  Provides:
+#    - "Input: CLI arguments"
+#    - "String: split"
+#    - "String: variable interpolation"
+#    
+#Simple Calculator:
+#  Description: "Accept simple RPN expressions as arguments and print result"
+#  Requires:
+#    - "CLI: Create script"
+#    - "Output: print"
+#    - "Control: if, elif, else"
+#  Provides:
+#    - "Input: CLI arguments"
+#    - "String: split"
+#    - "String: variable interpolation"
+#    - "Math: arithmetic"
+#    
+#Re-usable Calculator:
+#  Description: "Extend the Simple Calculator project so it can be executed or imported as a module"
+#  Extends:
+#    - "Simple Calculator"
+#  Provides:
+#    - "Module: overview, create, import"
+#    - "Script: Importable"
+#    
+#Simple Menu:
+#  Description: "Write a program the prompts the user to select options from a menu"
+#  Requires:
+#    - "Script: executable"
+#    - "Input: CLI prompt"
+#    - "Output: print"
+#    - "Function: overview, arguments, return"
+#  Provides:
+#    - "Loop: while"
+#    - "Input: CLI Menu"
+#    - "Script: return"  
+#    - "Output: stderr"
+#    
+#Write Fibonacci numbers to a file:
+#  Description: "Write the first 100 Fibonacci numbers to a file called fibonacci.txt"
+#  Requires:
+#    - "Script: executable"
+#    - "Loop: while"
+#    - "Math: arithmetic"
+#  Provides: 
+#    - "Output: file"
+#    
+#FizzBuzz:
+#  Description: "The classic 'FizzBuzz' problem. https://en.wikipedia.org/wiki/Fizz_buzz"
+#  Requires:
+#    - "Script: executable"
+#    - "Loop: for, range"
+#    - "String: variable interpolation"
+#  Provides:
+#    - "Control: if, elif, else"
+#        
+#Simple Text Adventure from XML data files:
+#  Description: "Read an XML file with descriptions of 'rooms', guide user through them"
+#  Requires:
+#    - "Script: executable"
+#    - "Input: CLI prompt"
+#    - "Control: if, else"
+#    - "Function: definition, arguments, return values"
+#    - "XML: overview"
+#    - "Dictionary: creation"
+#    - "Dictionary: Methods: keys, values, items"
+#    - "Input: CLI Menu"
+#    - "Input: file"
+#  Provides:
+#    - "Input: XML"
+#    - "XML: Xpath: query by tag"
+#    - "Class: overview, creation"
+#    - "Class: Methods: __init__, __repr__"
+#  
+#Debugging with Decorators:
+#  Description: "Write a program with function decorators for optional error logging"
+#  Requires:
+#    - "Script: executable"
+#    - "Function: arguments, return values"
+#  Provides:
+#    - "Functions: decorators"
+#    - "Output: stderr"
+#  
+#Flask Hello World:
+#  Description: "Write a Flask web application that displays 'Hello World'"
+#  Requires:
+#    - "Strings: variable interpolation"
+#    - "Function: decorators"
+#    - "Function: return values"
+#  Provides:
+#    - "Flask: create app"
+#    - "Script: importable"
+#    - "String: concatenation"
+#    
+#Flask What's Your Name?:
+#  Description: "Write a Flask web application that prompts for a string and displays a customized response"
+#  Requires:
+#    - "Flask: Create app"
+#    - "String: variable interpolation"
+#  Provides:
+#    - "AJAX: overview"
+#    - "Flask: Input: form"
+#    - "Flask: Output: update div"
+#    
+#Adapt your text adventure for the web:
+#  Description: "Adapt the Simple Text Adventure project into a Flask web application"
+#  Extends:
+#    - "Simple Text Adventure from XML data files"
+#  Requires:
+#    - "Script: Importable"
+#    - "Flask: Create app"
+#    - "AJAX: overview"
+#    - "Flask: Input: form"
+#    - "Flask: Output: update div"

@@ -1,5 +1,5 @@
 #!/usr/bin/python
-import yaml
+import yaml, igraph
 def parse_skills(skills):
     parsed = set()
     if not hasattr(skills,"__iter__"):
@@ -13,6 +13,12 @@ def parse_skills(skills):
     return parsed
             
 class ProjectLibrary(object):
+            
+    @staticmethod
+    def from_yaml(fn):
+        swagifacts_yml = open(fn,"r").read().lower()
+        return ProjectLibrary(yaml.load(swagifacts_yml))  
+        
     def __init__(self,projects={}):
         self.skills_provided_by_project = {}
         self.projects_by_skill_provided = {}
@@ -33,7 +39,44 @@ class ProjectLibrary(object):
          self.projects_by_skill_provided,
          self.projects_that_extend,
          self.projects_extended_by
-         ) = self._index_projects()
+         ) = self._index_projects() 
+        
+            
+    def as_graph(self):
+        g = igraph.Graph(directed=True)
+        g.add_vertex("root",label="zero knowledge",noun="state")
+        skills = set()
+        for project,props in self.projects_raw.items():
+            requires = parse_skills(props.get("requires",[]))
+            provides = parse_skills(props.get("provides",[]))
+            extends  = props.get("extends",[])
+            description = props.get("description","No description")
+            g.add_vertex(
+                project,
+                label=project,
+                noun="project",
+                requires=requires,
+                provides=provides,
+                extends=extends,
+                description=description
+            )
+            skills.update(requires)
+            skills.update(provides)
+        for skill in skills:
+            g.add_vertex(skill,label=skill,noun="skill")
+            
+            
+        for project,props in self.projects_raw.items():
+            requires = parse_skills(props.get("requires",["root"]))
+            provides = parse_skills(props.get("provides",[]))
+            extends  = parse_skills(props.get("extends",[]))
+            for skill in requires:
+                g.add_edge(skill,project,verb="teaches")
+            for skill in provides:
+                g.add_edge(project,skill,verb="assessed by")
+            for extended_project in extends:
+                g.add_edge(extended_project, verb="extended by")
+        return g
             
     
     def get_skills(self,project_name,follow_extensions=False):
@@ -203,5 +246,7 @@ if __name__ == "__main__":
      "File: open, write, close",
      "Math: arithmetic, modulo",
     ]
-    lp = library.assessments_for_skills(["control: if","output:file"])
-    print str(lp)
+    
+    print library.as_graph()
+    #lp = library.assessments_for_skills(["control: if","output:file"])
+    #print str(lp)
