@@ -1,6 +1,6 @@
 # SwagmapGenerator
 
-The best way to see what this is all about is to read [`SwagMapGenerator.ipynb`](SwagMapGenerator.ipynb).
+The best way to quickly see what this is all about is to read [this](http://geekdome.net/swagmapgen/).
 
 The best way to play around with this code is:
 
