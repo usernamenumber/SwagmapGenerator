@@ -103,12 +103,13 @@ class ProjectLibrary(object):
                 "state":30
                 }[noun] for noun in g.vs["noun"]]
             self.graph = g
+            self.layout = g.layout("fr")
         return self.graph
         
     def render_graph(self):
         g = self.as_graph()
         graph_style = {
-            "layout" : g.layout("fr"), 
+            "layout" : self.layout, 
             "vertex_label_size" : 12, 
             "vertex_label_dist" : 1, 
             "edge_label_size" : 8,
@@ -127,7 +128,7 @@ class ProjectLibrary(object):
         
         # (re-)set graph state and list of selected nodes
         g.es["color"] = "gray"
-        g.vs["label_color"] = "gray"
+        g.vs["label_color"] = "black"
         g.es["weight"] = 0
         selected = {
             "nodes" : set([start.index,goal.index]),
@@ -175,6 +176,7 @@ class ProjectLibrary(object):
                     if project_on_path.index not in selected["nodes"]:
                         #print "  ADDING PROJECT: %s" % project_on_path["name"]
                         selected["nodes"].add(project_on_path.index)
+                        g.vs[project_on_path.index]["color"] = "darkgreen"
                         for provides_edge in g.es.select(_source=project_on_path.index,verb_eq="provides"):
                             provides_skill = g.vs[provides_edge.target]
                             if provides_skill["noun"] != "skill":
