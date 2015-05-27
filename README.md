@@ -1,6 +1,6 @@
 # SwagmapGenerator
 
-The best way to see what this is all about is to clone this repo, open `SwagMapGenerator.html` locally in your browser, and read it.
+The best way to see what this is all about is to read`[SwagMapGenerator.ipynb](SwagMapGenerator.ipynb)`.
 
 The best way to play around with this code is:
 
