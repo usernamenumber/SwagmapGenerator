@@ -35,9 +35,6 @@ class ProjectLibrary(object):
         
     def add_projects(self,projects):
         self.projects_raw.update(projects)
-        self._update_indexes()
-        
-    def _update_indexes(self):
         (self.skills_provided_by_project,
          self.skills_required_by_project,
          self.projects_by_skill_required,
@@ -202,7 +199,6 @@ class ProjectLibrary(object):
         
     def weight_by_relevance(self,skills):
         pass
-            
     
     def get_skills(self,project_name,follow_extensions=False):
         project_data = self.projects_raw[project_name]
@@ -361,7 +357,11 @@ class ProjectLibrary(object):
     
 if __name__ == "__main__":
     swagifacts_yml = open("swagifacts.yml","r").read().lower()
-    library = ProjectLibrary(yaml.load(swagifacts_yml))   
+    library = ProjectLibrary(yaml.load(swagifacts_yml))  
+    simple_test = [
+        "control: if",
+        "output:file",
+    ]
     python_basics = [
      "Script: executable, importable, exit",
      "Control: if, else",
@@ -372,6 +372,6 @@ if __name__ == "__main__":
      "Math: arithmetic, modulo",
     ]
     
-    print library.as_graph()
-    #lp = library.assessments_for_skills(["control: if","output:file"])
-    #print str(lp)
+    # Pass one of the topic lists defined above
+    lp = library.assessments_for_skills(simple_test)
+    print str(lp)
